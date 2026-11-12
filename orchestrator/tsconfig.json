@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "lib": ["es2024"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Node 24 runs .ts directly by stripping types, so nothing is emitted and
+    // imports keep their .ts extensions. `erasableSyntaxOnly` is the load-bearing
+    // one: it rejects syntax the stripper cannot erase (enums, namespaces,
+    // parameter properties), which would otherwise typecheck here and then fail
+    // at runtime.
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

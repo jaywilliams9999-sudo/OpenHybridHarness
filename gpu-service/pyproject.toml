@@ -1,0 +1,40 @@
+[project]
+name = "openhybridharness-gpu"
+version = "0.1.0"
+description = "GPU service for OpenHybridHarness"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.9",
+    "httpx>=0.28",
+    "nvidia-ml-py>=12.0",
+]
+
+[project.optional-dependencies]
+gpu = [
+    "torch>=2.5",
+    "diffusers>=0.40",
+    "transformers>=4.45",
+    "accelerate>=1.0",
+    "safetensors>=0.4",
+]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ohh_gpu*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-m 'not integration'"
+markers = [
+    "integration: requires a real NVIDIA GPU; excluded from the default run",
+]

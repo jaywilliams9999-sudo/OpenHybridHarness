@@ -1,0 +1,22 @@
+{
+  "name": "openhybridharness",
+  "version": "0.1.0",
+  "description": "OpenHybridHarness orchestrator",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test && tsc --noEmit",
+    "test:unit": "node --test",
+    "test:integration": "node --test --test-timeout=330000 test/integration.test.ts",
+    "typecheck": "tsc --noEmit",
+    "start": "node src/main.ts",
+    "hub": "node src/hub.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0"
+  }
+}

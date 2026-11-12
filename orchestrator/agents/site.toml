@@ -1,0 +1,30 @@
+# The default agent: the one `node src/main.ts "<prompt>"` runs.
+#
+# Everything here used to be constants in main.ts, which meant the harness
+# could run exactly one agent. Copy this file to add another.
+
+[agent]
+name = "site"
+role = "Produce hero assets for a site. Check what the card is holding before you ask it to render, prefer the model's native 512x512 unless the job needs another shape, and say plainly what you produced and where it landed. When the image is done, publish it with `publish` — it needs the operator's approval."
+
+# Placement. With no `model` line this agent runs locally on the registry's
+# `role = "code"` model. A name from models.toml picks another local model; a
+# `claude-*` name sends its runs to Claude (or, with no key, runs them locally
+# and marks them so).
+
+# Not yet consumed: no tool in the orchestrator touches the filesystem. Parsed now
+# so this file does not need editing the day `fs.write` lands.
+workdir = "./work/site"
+
+# The capability boundary. The model is shown these and only these, so a tool
+# left out of the list does not exist from where it is standing.
+# `publish` is gated: the loop blocks for the operator before it runs.
+tools = ["gpu_status", "gpu_generate_image", "publish"]
+
+[limits]
+# Whole cents, because the TOML subset refuses floats on purpose -- it guards
+# the registry's VRAM figures, where a silently-coerced number is the exact
+# bug class that cost this project a debugging session. Cents are the honest
+# unit for a cap anyway: an authored 0.1 is not 0.1.
+max_usd_cents = 200
+max_turns = 20

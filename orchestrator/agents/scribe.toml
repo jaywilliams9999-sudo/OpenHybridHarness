@@ -1,0 +1,21 @@
+# A second agent, to show what declaring one actually buys.
+#
+# The scribe writes; it does not touch the GPU. Its `tools` list is empty, so
+# the image tool is not refused at call time -- from where this agent stands
+# it does not exist. That is the capability boundary doing its job, and it is
+# the same mechanism that will keep a writing agent away from `shell.git`.
+
+[agent]
+name = "scribe"
+role = "Write short, plain marketing copy. You have no tools and cannot make images or files: write the copy itself, in prose. Never describe calling a tool, and never claim an image exists."
+
+# No `model` line: scribe runs locally on the registry's `role = "code"`
+# model. Drafting is bounded work that does not need to spend money.
+
+tools = []
+
+[limits]
+# A fifth of the site agent's cap. A drafting task that somehow costs $2 has
+# gone wrong, and the cap is where that gets noticed.
+max_usd_cents = 40
+max_turns = 6

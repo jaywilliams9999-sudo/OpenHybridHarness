@@ -1,0 +1,10 @@
+node_modules/
+# Runtime state, not source: the Ledger is per-machine and the artifacts are
+# whatever the last run rendered.
+ledger.db
+ledger.db-journal
+artifacts/
+published/
+ledger.db-wal
+ledger.db-shm
+running/

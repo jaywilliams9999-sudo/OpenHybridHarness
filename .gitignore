@@ -1,0 +1,17 @@
+node_modules/
+__pycache__/
+.venv/
+artifacts/
+*.sqlite
+*.db
+.env
+.remember/tmp/
+.remember/logs/
+*.egg-info/
+
+# Claude Code worktrees: a full duplicate checkout, not source.
+.claude/worktrees/
+
+# Agent working notes and browser captures.
+.superpowers/
+.playwright-mcp/

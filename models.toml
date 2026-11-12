@@ -1,0 +1,82 @@
+[gpu_service]
+# Loopback by default: the GPU service and the orchestrator run on one machine.
+host             = "127.0.0.1"
+port             = 7311
+vram_headroom_mb = 768
+# Unpinned models unused this long are unloaded by the VramScheduler so the card goes
+# back to whatever else this machine is doing. This is the card's only idle timer:
+# Ollama loads with keep_alive=-1 and never expires anything on its own.
+idle_unload_s    = 1800
+
+# The default text model, selected by `first_with_role("code")`. It is the only
+# entry with that role on purpose: measurement showed llama3.1:8b emitting
+# structured tool_calls 3 trials of 3, where qwen2.5-coder:7b failed 4 of 4, so
+# "which model drives the loop" is a decision recorded here rather than left to
+# whichever name happens to sort first.
+[models."llama3.1:8b"]
+backend = "ollama"
+vram_mb = 9809  # measured directly at the num_ctx below (2026-10-15,
+                # OLLAMA_KV_CACHE_TYPE=q4_0 and flash attention on, 100% on GPU
+                # at 60.2 tok/s). The first real load overwrites it with a fresh
+                # measurement; this is the pre-load estimate only.
+role    = "code"
+# The model's full declared window.
+#
+# This read 65536 earlier on 2026-10-15, on the finding that after an sdxl-turbo
+# render only ~8655 MB was reachable by eviction -- so the coder at 9809 MB
+# could not be reloaded, which broke the one flow that uses both models. That
+# was a real measurement of a real failure, but the cause was a bug, not the
+# card: `generate_image` never emptied the CUDA cache, so a render's activation
+# pool stayed in the allocator and the model's occupancy silently became its
+# peak. The VramScheduler books weights, so the difference was memory nothing could
+# see and nothing could free.
+#
+# With that fixed the constraint that forced 65536 is gone. Re-measured the
+# same evening: after a render the coder reloads at 131072 in 5.0s against 4.9s
+# at 65536, booking 9809 MB and leaving ~1.6 GB free on the card.
+#
+# The two models still never coexist (sdxl at ~7052 MB plus the coder at either
+# window exceeds 12288), so this costs no extra eviction churn -- the flow
+# evicts either way. What it buys is ~103k usable prompt tokens instead of
+# ~51k, for the same load time.
+#
+# One real cost remains: a larger window
+# makes recovering from an eviction proportionally more expensive, because the
+# prompt cache dies with the model. That bill scales with the context a turn
+# actually sends, not with this ceiling. Set OHH_NUM_CTX=65536 to trade the
+# capacity back for cheaper re-warming.
+num_ctx = 131072
+# KV cache cost per 1000 context tokens, by cache type. Lets the GPU service
+# re-base vram_mb onto another window or cache type, and fit the window to the
+# card it finds. measured_kv_cache is the type vram_mb above was measured under.
+kv_mb_per_1k_f16  = 134
+kv_mb_per_1k_q8_0 = 67
+kv_mb_per_1k_q4_0 = 34
+measured_kv_cache = "q4_0"
+
+[models."qwen2.5-coder:7b"]
+backend = "ollama"
+vram_mb = 4870  # observed 2026-09-19 on the RTX 3060, loaded alone;
+                # revalidated 2026-10-13: NVML delta 4875 MiB, a 5 MiB drift over
+                # three weeks. Ollama's own /api/ps says 4696 -- do not use it.
+# Deliberately not "code": it is a fill-in-the-middle model whose template tells
+# it to wrap calls in <tool_call> tags and which emits bare JSON instead, so
+# Ollama's parser never sees a call and it cannot drive the agent loop. Still a
+# usable completion model, and still a residency fixture for the VramScheduler's tests.
+role    = "completion"
+
+[models."sdxl-turbo"]
+backend = "diffusers"
+repo    = "stabilityai/sdxl-turbo"
+vram_mb = 7515  # observed 2026-09-19 on the RTX 3060, loaded alone.
+                # 2026-10-13 measured 7087 on a clean load with no eviction, so
+                # the 5.7% gap is not allocator reuse. Left high on purpose: this
+                # hint drives fit planning while the measured value is what gets
+                # booked, so erring high evicts early rather than overcommitting.
+role    = "image"
+dtype   = "fp16"
+steps   = 4
+# sdxl-turbo is trained at 512x512; rendering it at 1024 costs VRAM and time
+# for a worse image. Size is generation policy, so it lives here, not in api.py.
+width   = 512
+height  = 512

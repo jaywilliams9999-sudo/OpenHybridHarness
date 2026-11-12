@@ -1,0 +1,8 @@
+{
+  "name": "openhybridharness-root",
+  "private": true,
+  "scripts": {
+    "start": "node orchestrator/src/launch.ts",
+    "test": "npm --prefix orchestrator test && cd gpu-service && python -m pytest -q"
+  }
+}

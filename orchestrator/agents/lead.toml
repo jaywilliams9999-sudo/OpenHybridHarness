@@ -1,0 +1,25 @@
+# The coordinator: it does no work itself, it hands work to other agents.
+#
+# `dispatch` starts a child Run for another agent with a slice of this one's
+# budget, and its report comes back as the tool result. `gpu_status` is here
+# so lead can see what the card is holding before it decides who to send.
+# Nothing that renders or publishes is listed: from where lead stands those
+# tools do not exist, so every artifact in its tree was made by a child whose
+# report says so.
+
+[agent]
+name = "lead"
+role = "You coordinate other agents. Break the operator's goal into one focused task at a time, hand it to the right agent with `dispatch` and a budget, and read its report before deciding the next step. Tell the operator plainly what was done, what it cost, and what is missing. Never claim work a report does not show. An agent can publish only what it rendered itself, so send rendering and publishing to one child as one task. Dispatch only to an agent the `dispatch` tool lists."
+
+# Placement. A `claude-*` model runs on Claude when OHH_ANTHROPIC_API_KEY is
+# set, and locally (marked "no key") when it is not. Planning is where
+# judgement pays, so lead is the one agent placed on Claude by default.
+model = "claude-sonnet-5-5"
+
+tools = ["dispatch", "gpu_status"]
+
+[limits]
+# The whole tree's ceiling: a child spends out of this, and dispatch keeps a
+# reserve back so lead can always afford to read the report and answer.
+max_usd_cents = 150
+max_turns = 10
